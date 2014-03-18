@@ -64,6 +64,7 @@ def delete_chef_node(instance)
     node = $1
     puts "#{instance}: found matching chef node: #{node}; deleting"
     system("knife node delete #{node}")
+    system("knife client delete #{node}")
     return true
   end
 
