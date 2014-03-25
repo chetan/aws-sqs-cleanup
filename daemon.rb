@@ -9,7 +9,7 @@ require "aws-sdk"
 require "multi_json"
 
 def send_alert(log)
-  return if AWS_TOPIC_NAME.nil? or AWS_TOPIC_NAME.empty?
+  return if AWS_TOPIC_NAME.nil? or AWS_TOPIC_NAME.empty? or DRY_RUN
 
   topic = AWS::SNS.new.topics[AWS_TOPIC_NAME]
   if topic.nil? then
@@ -63,8 +63,10 @@ def delete_chef_node(instance)
   if ret =~ /Node Name:\s+(.*?)/ then
     node = $1
     puts "#{instance}: found matching chef node: #{node}; deleting"
-    system("knife node delete #{node}")
-    system("knife client delete #{node}")
+    if not DRY_RUN then
+      system("knife node delete #{node}")
+      system("knife client delete #{node}")
+    end
     return true
   end
 
@@ -112,6 +114,11 @@ AWS.config(
   :access_key_id => AWS_ACCESS_KEY,
   :secret_access_key => AWS_SECRET_KEY)
 
+DRY_RUN = (ARGV.shift == "--dry-run")
+if DRY_RUN then
+  puts "Dry run mode enabled (won't actually delete chef nodes and leaves messages in queue)"
+end
+
 queues = validate_queues()
 
 puts "Listening on SQS queue(s) '#{AWS_QUEUE_NAME}' for termination events..."
@@ -125,7 +132,7 @@ begin
       messages.each do |msg|
         next if msg.nil?
         process_message(q, msg)
-        msg.delete # comment out for testing (keeps message in queue)
+        msg.delete if !DRY_RUN # comment out for testing (keeps message in queue)
       end
       exit
     end

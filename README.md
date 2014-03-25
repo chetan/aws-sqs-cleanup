@@ -32,3 +32,9 @@ $ ./daemon.rb
 or
 $ ./daemon.rb 2>&1 >cleanup_daemon.log &
 ```
+
+For testing, pass the dry run flag:
+
+```
+$ ./daemon.rb --dry-run
+```
