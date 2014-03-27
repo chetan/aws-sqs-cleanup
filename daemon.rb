@@ -134,7 +134,6 @@ begin
         process_message(q, msg)
         msg.delete if !DRY_RUN # comment out for testing (keeps message in queue)
       end
-      exit
     end
     sleep 60
   end
